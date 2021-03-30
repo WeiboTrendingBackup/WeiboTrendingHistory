@@ -1,6 +1,6 @@
 node_modules
 .DS_Store
-dist
+# dist
 *.local
 package-lock.json
 public/service-worker.js

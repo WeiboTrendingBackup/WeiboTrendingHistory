@@ -44,37 +44,16 @@
                     />
                     <h1>微博热搜榜历史</h1>
                 </div>
-                <!-- 后面再实现这种根据成天数二次分组的选择框 -->
-                <!-- <el-select v-model="value" placeholder="请选择">
-                <el-option-group
-                    v-for="group in options"
-                    :key="group.label"
-                    :label="group.label"
-                >
-                    <el-option
-                        v-for="item in group.options"
-                        :key="item.value"
-                        :label="item.label"
-                        :value="item.value"
-                    >
-                    </el-option>
-                </el-option-group>
-            </el-select> -->
                 <div class="right">
-                    <span class="time-info">备份时间：</span>
-                    <el-select
+                    <span class="time-info">时间：</span>
+                    <el-cascader
                         size="small"
                         v-model="createdTime"
-                        placeholder="请选择"
-                    >
-                        <el-option
-                            v-for="item in timeline"
-                            :key="item.value"
-                            :label="item.label"
-                            :value="item.value"
-                        >
-                        </el-option>
-                    </el-select>
+                        :options="timeline"
+                        placeholder="选择时间"
+                        :show-all-levels="true"
+                        separator="-"
+                    ></el-cascader>
                     <el-select size="small" v-model="type" placeholder="请选择">
                         <el-option
                             v-for="item in types"
@@ -89,20 +68,12 @@
                         type="primary"
                         icon="el-icon-search"
                         @click="search"
-                        >搜索</el-button
+                        >查看</el-button
                     >
                 </div>
             </div>
         </nav>
         <div class="content">
-            <!-- <h2>
-                备份时间：{{
-                    new Date(createdTime * 1000)
-                        .toLocaleString()
-                        .replace(/\//g, '-')
-                        .replace(/上午|下午/g, ' ')
-                }}
-            </h2> -->
             <el-skeleton v-if="!data.length" :rows="10" />
             <table v-else>
                 <thead>
@@ -133,12 +104,17 @@
                 </tbody>
             </table>
         </div>
+        <footer>
+            <h2>「为 100 年后的历史学家研究当下提供第一手资料」</h2>
+        </footer>
     </div>
 </template>
 
 <script>
+import { parseTimeline } from '../util/format';
+
 export default {
-    name: 'HelloWorld',
+    name: 'Content',
     props: {
         msg: String,
     },
@@ -154,43 +130,7 @@ export default {
                     value: 1,
                 },
             ],
-            // options: [
-            //     {
-            //         label: '热门城市',
-            //         options: [
-            //             {
-            //                 value: 'Shanghai',
-            //                 label: '上海',
-            //             },
-            //             {
-            //                 value: 'Beijing',
-            //                 label: '北京',
-            //             },
-            //         ],
-            //     },
-            //     {
-            //         label: '城市名',
-            //         options: [
-            //             {
-            //                 value: 'Chengdu',
-            //                 label: '成都',
-            //             },
-            //             {
-            //                 value: 'Shenzhen',
-            //                 label: '深圳',
-            //             },
-            //             {
-            //                 value: 'Guangzhou',
-            //                 label: '广州',
-            //             },
-            //             {
-            //                 value: 'Dalian',
-            //                 label: '大连',
-            //             },
-            //         ],
-            //     },
-            // ],
-            createdTime: 0,
+            createdTime: [],
             type: 0,
             timeline: [],
             topics: [], // 热搜榜
@@ -210,14 +150,16 @@ export default {
             fetch(url)
                 .then((res) => res.json())
                 .then((res) => {
-                    this.createdTime = res.timeline[0];
-                    this.timeline = res.timeline.map((item) => ({
-                        label: new Date(item * 1000)
-                            .toLocaleString()
-                            .replace(/\//g, '-')
-                            .replace(/上午|下午/g, ' '),
-                        value: item,
-                    }));
+                    // 将所有平级的时间转换成 日期-小时 的两级下拉选择框。
+                    // 如果已经有数据了，比如用户继续点击搜索，并没有刷新页面的话。就不重复赋值了。
+                    if (!this.timeline.length) {
+                        this.timeline = parseTimeline(res.timeline);
+                        this.createdTime = [
+                            this.timeline[0].value,
+                            this.timeline[0].children[0].value,
+                            this.timeline[0].children[0].children[0].value,
+                        ];
+                    }
                     this.data = res.data;
                 })
                 .catch((err) => {
@@ -240,7 +182,8 @@ export default {
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
     width: fit-content;
-    margin: 100px auto;
+    margin: auto;
+    margin-top: 100px;
 }
 nav {
     position: fixed;
@@ -283,7 +226,7 @@ nav .right * {
 }
 nav .right .time-info {
     color: #999;
-    font-size: 12px;
+    font-size: 16px;
 }
 .logo {
     width: 40px;
@@ -296,10 +239,15 @@ h1 {
     font-weight: normal;
     cursor: pointer;
 }
-/* h2 {
+footer {
+    margin: 50px auto;
+}
+h2 {
     font-weight: normal;
     text-align: center;
-} */
+    font-size: 18px;
+    color: #999;
+}
 .content {
     margin-top: 50px;
     min-height: calc(100vh - 200px);
@@ -312,9 +260,10 @@ table {
 }
 .icon-top {
     display: inline-block;
-    width: 12px;
+    width: 16px;
     height: 13px;
     background: url(../assets/icon_top.png);
+    background-repeat: no-repeat;
 }
 .ranktop,
 td.td-01 {
@@ -337,12 +286,12 @@ th {
     line-height: 30px;
     border-bottom: solid 1px #fbfbfb;
     color: #999;
-    font-size: 12px;
+    font-size: 15px;
 }
 td {
     border-bottom: solid 1px #f2f2f5;
     line-height: 36px;
-    font-size: 12px;
+    font-size: 16px;
 }
 a {
     color: #0078b6;

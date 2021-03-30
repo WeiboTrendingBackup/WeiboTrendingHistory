@@ -4,3 +4,4 @@ node_modules
 *.local
 package-lock.json
 public/service-worker.js
+t.*

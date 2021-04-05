@@ -142,7 +142,7 @@ export default {
         search() {
             // TODO loading 太简单粗暴了
             this.data = [];
-            this.getData(this.createdTime, this.type);
+            this.getData(this.createdTime[2], this.type);
         },
         getData(createdTime = '', type = 0) {
             // const url = `http://localhost:8080/api/list?created_time=${createdTime}&type=${type}`;
@@ -169,9 +169,6 @@ export default {
     },
     created() {
         this.getData('', this.type);
-    },
-    mounted() {
-        console.log('data', this.data.length);
     },
 };
 </script>
